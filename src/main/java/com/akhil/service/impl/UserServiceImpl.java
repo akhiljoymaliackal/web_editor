@@ -36,7 +36,7 @@ public class UserServiceImpl implements UserService {
     public UserDto createUser(UserDto userDto) throws UserAlreadyExistException {
         if (userRepository.findByEmailId(userDto.getEmailId())==null){
             userDto.setUserId(DigestUtils.sha256Hex(userDto.getEmailId()));
-            userDto.setPassword(bCryptPasswordEncoder.encode(userDto.getPassword()));
+            userDto.setPassword(bCryptPasswordEncoder.encode(userDto.getUnEncryptedPassword()));
             UserEntity userEntity = new UserEntity();
             BeanUtils.copyProperties(userDto,userEntity);
             userRepository.save(userEntity);
@@ -45,6 +45,17 @@ public class UserServiceImpl implements UserService {
         }
         else throw new UserAlreadyExistException("User Already Exist");
     }
+
+    @Override
+    public UserDto getUserByEmailId(String emailId) {
+        UserEntity userEntity = userRepository.findByEmailId(emailId);
+        if (userEntity==null) throw new UsernameNotFoundException("User didn't exist "+ emailId );
+        UserDto userDto = new UserDto();
+        BeanUtils.copyProperties(userEntity,userDto);
+        return userDto;
+
+    }
+
 
     @Override
     public UserDetails loadUserByUsername(String s) throws UsernameNotFoundException {
